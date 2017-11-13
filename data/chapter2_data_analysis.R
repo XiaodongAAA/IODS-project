@@ -46,6 +46,23 @@ summary(reg_model)
 reg_model2=lm(points~attitude+stra, data=lrn2014)
 summary(reg_model2)
 
-# 
+# The model is fitted with the target points and two explanatory variable, attitude and stra. According to the summary results, the 
+# relationship between these variable should be points=8.9729+3.4658*attitude+0.9137*stra. The Std. Error is the standard deviation of the sampling distribution of 
+# the estimate of the coefficient under the standard regression assumptions. The t values are the estimates divided by there standard errors. It is an estimation of how 
+# extreme the value you see is, relative to the standard error. Pr. is the p-value for the hypothesis for which the t value is the test statistic. It tell you the probability 
+# of a test statistic at least as unusual as the one you obtained, if the null hypothesis were true (the null hypothesis is usually 'no effect', unless something else is specified).
+# So, if the p-value is very low, then there is a higher probability that you're see data that is counter-indicative of zero effect. 
+# Residual standard error represents the standard deviation of the residuals. It's a measure of how close the fit is to the points. The Multiple R-squared is the proportion of the variance 
+# in the data that's explained by the model. The more variables you add, the large this will be. The Adjusted R-squared reduces that to account for the number of variables in the model.
+# The F-statistic on the last line is telling you whether the regression as a whole is performing 'better than random',in other words, it tells whether your model fits better
+# than you'd expect if all your predictors had no relationship with the response. The p-value in the last row is the p-value for that test, essentially comparing the full model you fitted with an intercept-only model.
 
+# Diagnostic plots
+# Residuals vs Fitted values, Normal QQ-plot and Residuals vs Leverage are plotted
+par(mfrow=c(2,2))
+plot(reg_model2, which=c(1,2,5))
+
+# The Residuals vs Fitted values plot examines if the errors have constant variance. The graph shows a reasonable constant variance without any pattern.
+# The Normal QQ-polt checks if the errors are normally distributed. We see from the graph a very good linear model fit, indicating a normally distributed error set.
+# The Residuals vs Leverage confirms if there are any outliers with high leverage. From the graph, it shows that all the leverage are below 0.06, indicating good model fitting.
 
