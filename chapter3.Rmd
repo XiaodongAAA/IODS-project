@@ -1,0 +1,141 @@
+# Chapter 3 Logistic regression
+Created on 18.11.2017
+@author: Xiaodong Li
+This is the script for RStudio exercise 3 -- Data analysis
+The work focuses on exploring data and performing and interpreting logistic regression analysis on the UCI Machine Learning Repository, Student Performance Data Set.
+
+## Step 0: import packages
+```{r}
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+```
+
+## Step 1:read data
+```{r}
+alc=read.csv('/home/xiaodong/IODS_course/IODS-project/data/alc.csv',sep=',',header = TRUE)
+colnames(alc)
+```
+The data used in the exercise is a joined data set that combines the two student alcohol consumption data sets, student-mat.csv and student-por.csv. The two data sets are retrieved from the UCI Machine Learning Repository. The data are from two identical questionaires related to secondary school student alcohol consumption in Portugal. For more background information, please check [here.](https://archive.ics.uci.edu/ml/datasets/Student+Performance) The variables not used for joining the two data have been combined by averaging. The `alc_use` colume is the average of weekday (`Dalc`) and weekend (`Walc`) alcohol use. The `high_use` column records if the `alc_use` is higher than 2 or not. 
+
+## Step 2:hypothesis about relationships with alcohol consumption
+Choose four interesting variables in the data and present personal hypothesis about their relationships with alcohol consumption.
+- `failures`: positive correlation, the more alcohol consumption, the more failures  
+- `absenses`: positive correlation, the more alcohol consumption, the more absenses  
+- `sex`: male is more than female students with high alcohol use  
+- `studytime`: negative correlation, the more alcohol consumption, the less studytime 
+
+## Step 3: Explore the distributions of the chosen variables and there relationships with alcohol consumption
+
+### The relationship between sex and alcohol use
+```{r}
+bar_sex=ggplot(alc, aes(x=alc_use,fill=sex))+geom_bar(); bar_sex
+```
+`sex`~`alc_use`:  
+According to the count~alc_use bar figure plotted according to different sexes, we can see that female students are the main low alcohol users (`alc_use` < 2.5), however, for high alcohol users (`alc_use` > 2.5), most of them are male students. The bar figure also tells us that most of the alcohol users are very light users and the numbers of them decrease quickly with the increasing alcohol use levels (except for the extreme high users).
+
+### The relationship between absences, failures, studytime and alcohol use
+The failures, absences and studytime are scaled according to the counts of the alcohol users in different levels.
+```{r}
+alc2=group_by(alc,alc_use)
+tab_sum=summarise(alc2,count=n(),absences=sum(absences),failures=sum(failures),studytime=sum(studytime))
+tab_sum=mutate(tab_sum,abs_count=absences/count,fai_count=failures/count,styt_count=studytime/count)
+tab_sum
+```
+```{r}
+bar_absences=ggplot(tab_sum,aes(x=alc_use,y=abs_count))+geom_bar(stat='identity'); bar_absences
+bar_failures=ggplot(tab_sum,aes(x=alc_use,y=fai_count))+geom_bar(stat='identity'); bar_failures
+bar_studytime=ggplot(tab_sum,aes(x=alc_use,y=styt_count))+geom_bar(stat='identity'); bar_studytime
+```
+  
+`absences`~`alc_use`:  
+There ia an increasing trend with absenses and alcohol use, which is in line with our hypothesis. When the alcohol use is 4.5, the absence is extremely high. The second high absence happens when the alcohol use is on the highest level.  
+`failures`~`alc_use`:   
+There is an positive correlation between failures and alcohol use. For light alcohol users, the failures are also in a low level, however, the failure reaches the highest mount when `alc_use`= 3. After that the failures fall down with incresing alcohol use, and we interpret this as lacking of enough samples. For extreme high alcohol users (`alc_use`=5), the failures are at the highest level, the same as `alc_use`=3.  
+`studytime`~`alc_use`:    
+The figure shows that there is no obvious relations between the study time and alcohol use. This is not in agreement with our hypothesis before. The lowest alcohol users have the most study time and the study time of the highest users are low compared with the other alcohol using levels. But the difference bwteen them are not quite obvious. 
+
+### Box plots by goups
+Box plots are an excellent way of displaying and comparing distributions. The box visualizes the percentiles of the 25th, 50th and 75th of the data, while the whiskers show the typical range and the ourliers of a variable. 
+```{r}
+box_absences=ggplot(alc,aes(x=high_use,y=absences))+geom_boxplot(); box_absences
+box_failures=ggplot(alc,aes(x=high_use,y=failures))+geom_boxplot(); box_failures
+box_studytime=ggplot(alc,aes(x=high_use,y=studytime))+geom_boxplot(); box_studytime
+```
+  
+From the box plot of `absences` vs. `high_use`, it is obvious that the high alcohol users (`alc_use` > 2) are most likely to be absent from school. The box plot of `studytime` vs. `high_use` shows that high alcohol use also reduces the study time of the students. The conclusiona are in line with our hypothesis before.   
+
+## Step 4: Logistic regression
+The logistic regression is used here to identify factors (failures,absences,sex and studytime) related to higher than average student alcohol consumption. 
+```{r}
+m=glm(high_use~failures+absences+sex+studytime, data=alc,family='binomial')
+summary(m)
+coef(m)
+```
+  
+According to the summary results, the estimated coefficients for failures, absences, sexM and studytime are 0.360, 0.087, 0.795 and -0.340 respectively. The results show that, for failures, absences and sexM, the correlations between them and alcohol use are positive while for studytime, the correlation is negative. This is in agreement with our previous hypothesis. According to the `P value` shown in the summary part, the biggest possibility happens between `absences` and `high_use`. The relation between `failures` and `high_use` may seem not quite convincing and this is in agreement with the box plot shown in the last part. 
+
+```{r}
+OR=coef(m) %>% exp
+CI=confint(m) %>% exp
+cbind(OR,CI)
+```
+  
+The ratio of expected "success" to "failures" are called the odds: p/(1-p). Odds are an alternative way of expressing probabilities. Higher odds corresponds to a higher probability of success when OR > 1. Odds higher than 1 means that X is positively associated with "success". If OR < 1, lower odds corresponds to the higher probability of success. The computational target variable in the logistic regression model is the log of odds, so applying exponent function to the modelled values gives the odds.   
+From the summary of the odds one can see that sexM gives the largest odds. This means that sexM has higher probability to high alcolhol use compared to failures and absences. The odds of studytime is the lower than 1. The result indicate that higher alcohol use corresponds to less study time.  
+The confidence intervals of 2.5% and 97.5 % for the odd ratios are also listed in the data frame.  
+
+## Step 5: Binary predictions
+# predict() the probability of high_use
+```{r}
+probabilities <- predict(m, type = "response")
+alc <- mutate(alc, probability = probabilities)
+alc <- mutate(alc, prediction = probability>0.5)
+select(alc, failures, absences, sex, studytime, high_use, probability, prediction) %>% tail(10)
+table(high_use = alc$high_use, prediction = alc$prediction)%>%addmargins
+g=ggplot(alc, aes(x = probability, y = high_use, col=prediction))
+g=g+geom_point()
+g
+table(high_use = alc$high_use, prediction = alc$prediction)%>% prop.table%>%addmargins
+```
+According to the last 10 rows of data, we can see that most of the predictions are correct, except for the last two one. The last two samples are high alcohol users however, the prediction show that they are not, which is incorrect.  
+The cross tabulation of predictions versus the actual values show that 256 out of 268 `FALSE`(non-high alcohol users) values were predicted correctly by the model, while only 34 of 114 `TRUE`(high alcohol users) were predicted correctly. The correct prediction rate of `FALSE` samples is 95.5% while the correct prediction rate of `TRUE` samples is only 29.8%.  
+The results show that the model could give relatively good predictions for `FALSE` results while for the prediction of `TRUE` results is not sensitive.  
+
+## Step 6: Compute the average number of incorrect predictions
+Accuracy: the average number of correctly classified observations.
+Penalty (loss) function: the mean of incorrectly classified observations.
+Less penalty function means better predictions.
+```{r}
+# define a loss function (mean prediction error)
+loss_func <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+# call loss_func to compute the average number of wrong predictions in the data
+loss_func(class = alc$high_use, prob = alc$probability)
+```
+So, the wrong predictions of the model is about 24.1%. Combined with the analysis from step 5, we know that most of the wrong predictions are `TRUE` results (12 wrongly prediction for `FALSE` scenarios and 80 wrongly prediction for `TRUE` scenarios).  
+
+## Step 7: Cross-validation
+Cross-validation is a method of testing a predictive model on unseen data. In cross-validation, the value of a penalty (loss) function (mean prediction error) is computed on data not used for finding the model. The low value of cross-validation result means better model predictions.  
+Perform 10-fold cross-validation
+```{r}
+library(boot)
+cv <- cv.glm(data = alc, cost = loss_func, glmfit = m, K = 10)
+cv$delta[1]
+```
+The 10-fold cross-validation result show that the test set performance are mostly between 0.25 and 0.26. There is no obvious smaller prediction error than the model introduced in DataCamp which has an error of about 0.26.  
+
+
+
+
+
+
+
+
+
+
+
+
+
