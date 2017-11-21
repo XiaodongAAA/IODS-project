@@ -86,7 +86,7 @@ From the summary of the odds one can see that sexM gives the largest odds. This 
 The confidence intervals of 2.5% and 97.5 % for the odd ratios are also listed in the data frame.  
 
 ## Step 5: Binary predictions
-# predict() the probability of high_use
+predict() the probability of high_use
 ```{r}
 probabilities <- predict(m, type = "response")
 alc <- mutate(alc, probability = probabilities)

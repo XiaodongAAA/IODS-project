@@ -261,10 +261,7 @@ The confidence intervals of 2.5% and 97.5 % for the odd ratios are also listed i
 </div>
 <div id="step-5-binary-predictions" class="section level2">
 <h2>Step 5: Binary predictions</h2>
-</div>
-</div>
-<div id="predict-the-probability-of-high_use" class="section level1">
-<h1>predict() the probability of high_use</h1>
+<p>predict() the probability of high_use</p>
 <pre class="r"><code>probabilities &lt;- predict(m, type = &quot;response&quot;)
 alc &lt;- mutate(alc, probability = probabilities)
 alc &lt;- mutate(alc, prediction = probability&gt;0.5)
@@ -299,6 +296,7 @@ g</code></pre>
 <p>According to the last 10 rows of data, we can see that most of the predictions are correct, except for the last two one. The last two samples are high alcohol users however, the prediction show that they are not, which is incorrect.<br />
 The cross tabulation of predictions versus the actual values show that 256 out of 268 <code>FALSE</code>(non-high alcohol users) values were predicted correctly by the model, while only 34 of 114 <code>TRUE</code>(high alcohol users) were predicted correctly. The correct prediction rate of <code>FALSE</code> samples is 95.5% while the correct prediction rate of <code>TRUE</code> samples is only 29.8%.<br />
 The results show that the model could give relatively good predictions for <code>FALSE</code> results while for the prediction of <code>TRUE</code> results is not sensitive.</p>
+</div>
 <div id="step-6-compute-the-average-number-of-incorrect-predictions" class="section level2">
 <h2>Step 6: Compute the average number of incorrect predictions</h2>
 <p>Accuracy: the average number of correctly classified observations. Penalty (loss) function: the mean of incorrectly classified observations. Less penalty function means better predictions.</p>
@@ -319,7 +317,7 @@ Perform 10-fold cross-validation</p>
 <pre class="r"><code>library(boot)
 cv &lt;- cv.glm(data = alc, cost = loss_func, glmfit = m, K = 10)
 cv$delta[1]</code></pre>
-<pre><code>## [1] 0.2591623</code></pre>
+<pre><code>## [1] 0.2696335</code></pre>
 <p>The 10-fold cross-validation result show that the test set performance are mostly between 0.25 and 0.26. There is no obvious smaller prediction error than the model introduced in DataCamp which has an error of about 0.26.</p>
 </div>
 </div>
