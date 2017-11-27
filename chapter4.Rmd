@@ -1,0 +1,20 @@
+# Chapter 4 Clustering and classification
+Created on 26.11.2017
+@author: Xiaodong Li
+This is the script for RStudio exercise 4 -- Clustering and classification
+The work focuses on exploring data and performing clustering methods which try to find the clusters (or groups) from the data. Clustering means that some points (or observations) of the data are in some sense closer to each other than some other points. Based on a successful clustering, we may try to classify new observations to these clusters and hence validate the results of clustering. This week's data is the Boston data from the MASS package.
+
+## Step 0: Import packages
+```{r}
+library(MASS)
+```
+
+## Step 1: Load and explore the data
+```{r}
+data("Boston")
+str(Boston)
+dim(Boston)
+```
+The `Boston` data describes the housing values in the suburs of Boston. Is contains 14 variables which describe the situations of the housing environment like `crim`: per capita crime rate by town; `lstat`: lower status of the population (percent). In each variable there are 506 observations giving the detailed data of the coresponding variable.  
+## Step 2: The correlations between variables
+
