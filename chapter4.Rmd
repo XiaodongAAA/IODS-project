@@ -19,16 +19,17 @@ data("Boston")
 str(Boston)
 dim(Boston)
 ```
-The `Boston` data describes the housing values in the suburs of Boston. Is contains 14 variables which describe the situations of the housing environment like `crim`: per capita crime rate by town; `lstat`: lower status of the population (percent). In each variable there are 506 observations giving the detailed data of the coresponding variable.
-##Step 2: The correlations between variables
+The `Boston` data describes the housing values in the suburs of Boston. Is contains 14 variables which describe the situations of the housing environment like `crim`: per capita crime rate by town; `lstat`: lower status of the population (percent). In each variable there are 506 observations giving the detailed data of the coresponding variable.  
+## Step 2: The correlations between variables  
 The function `cor()` can be used to create the correlation matrix. A more visual way to look at the correlations is to use `corrplot()` function (from the corrplot package).
 ```{r}
 cor_matrix<-cor(Boston) %>% round(2)
 corrplot(cor_matrix, method="circle",type='upper',cl.pos='b',tl.pos='d',tl.cex=0.6)
 ```
-The corrplot shows the correlations between variables of the Boston dataset. The darker color in the corrplot indicates more straight corelation. Blue color means a positive correlation while red color means a negative correlation. Then from the figure we can summarise that `rad` (index of accessibility to radial highways) and `tax` (full-value property-tax rate per \$10000) have very strong positive correlation. And `dis` (weighted mean of distances to five Boston employment centres) very strong negative correlations with `nox` (nitrogen oxides concentration), `age` (proportion of owner-occupied units built prior to 1940) and `indux` (proportion of non-retail business acres per town). `medv` (meidan value of owner-occupied homes in \$1000) and `lstat` (lower status of the population) have very strong negative correlation too. 
-##Step 3: Scale the whole dataset
-In the scaling we subtract the column means from the corresponding columns and divide the difference with standard deviation. 
+  
+The corrplot shows the correlations between variables of the Boston dataset. The darker color in the corrplot indicates more straight corelation. Blue color means a positive correlation while red color means a negative correlation. Then from the figure we can summarise that `rad` (index of accessibility to radial highways) and `tax` (full-value property-tax rate per \$10000) have very strong positive correlation. And `dis` (weighted mean of distances to five Boston employment centres) very strong negative correlations with `nox` (nitrogen oxides concentration), `age` (proportion of owner-occupied units built prior to 1940) and `indux` (proportion of non-retail business acres per town). `medv` (meidan value of owner-occupied homes in \$1000) and `lstat` (lower status of the population) have very strong negative correlation too.   
+## Step 3: Scale the whole dataset  
+In the scaling we subtract the column means from the corresponding columns and divide the difference with standard deviation.   
 $scaled(x) = \frac{x - mean(x)}{ sd(x)}$
 ```{r}
 boston_scaled <- scale(Boston)
@@ -41,17 +42,17 @@ boston_scaled=as.data.frame(boston_scaled)
 bins=quantile(boston_scaled$crim)
 crime=cut(boston_scaled$crim, breaks = bins, include.lowest = TRUE, label = c('low','med_low','med_high','high'))
 table(crime)
-boston_scaled=select(boston_scaled, -crim)
+boston_scaled=dplyr::select(boston_scaled, -crim)
 boston_scaled=data.frame(boston_scaled, crime)
 n <- nrow(boston_scaled)
 ind <- sample(n,  size = n * 0.8)
 train <- boston_scaled[ind,]
 test <- boston_scaled[-ind,]
 correct_classes <- test$crime
-test <- select(test, -crime)
+test <- dplyr::select(test, -crime)
 ```
-First, we use the quantiles as the break points and creat a categorical variable of the crime rate in the Boston dataset. Then the old crime rate variable is dropped from the old crime rate variable. And then the dataset is divided into train and test sets where 80% of the data belongs to the train set.  
-##Step 4: Linear discriminant analysis
+First, we use the quantiles as the break points and creat a categorical variable of the crime rate in the Boston dataset. Then the old crime rate variable is dropped from the old crime rate variable. And then the dataset is divided into train and test sets where 80% of the data belongs to the train set.    
+## Step 4: Linear discriminant analysis  
 **Linear Discriminant analysis** is a classification (and dimension reduction) method. It finds the (linear) combination of the variables that separate the target variable classes. The target can be binary or multiclass variable.
 ```{r}
 lda.fit <- lda(crime~., data = train)
@@ -67,10 +68,11 @@ classes <- as.numeric(train$crime)
 plot(lda.fit, dimen = 2,col=classes,pch=classes)
 lda.arrows(lda.fit, myscale = 3)
 ```
+  
 LDA can be visualized with a biplot. A Biplot is an enhanced scatterplot that uses both points and vectors to represent structure. A biplot uses points to represent the scores of the observations on the principal components, and it uses vectors to represent the coefficients of the variables on the principal components.  
-`Points`: Points that are close together correspond to observations that have similar scores on the components displayed in the plot. To the extent that these components fit the data well, the points also correspond to observations that have similar values on the variables.
-`Vectors`: A vector points in the direction which is most like the variable represented by the vector. This is the direction which has the highest squared multiple correlation with the principal components. The length of the vector is proportional to the squared multiple correlation between the fitted values for the variable and the variable itself.
-##Step 5: Predict LDA
+`Points`: Points that are close together correspond to observations that have similar scores on the components displayed in the plot. To the extent that these components fit the data well, the points also correspond to observations that have similar values on the variables.  
+`Vectors`: A vector points in the direction which is most like the variable represented by the vector. This is the direction which has the highest squared multiple correlation with the principal components. The length of the vector is proportional to the squared multiple correlation between the fitted values for the variable and the variable itself.   
+## Step 5: Predict LDA  
 The function `predict()` can be used to predict values based on a model.  
 We used the test data got from Step 3 where the crime categories is saved as `correct_classes` and the categorical crime variable is removed from the the test dataset.
 ```{r}
@@ -88,8 +90,8 @@ t=data.frame(correct=index,predict=correct,sum=sumdata)
 t$percentage=t$predict/t$sum
 t
 ```
-From the table we can see that on the whole the corrected prediction precentage is 76.5% and the percentage increases with the increase of crime rate. The model is more suitable for predict high crime rate area.  
-##Step 6: Distance measures and clustering
+From the table we can see that on the whole the corrected prediction precentage is 76.5% and the percentage increases with the increase of crime rate. The model is more suitable for predict high crime rate area.    
+## Step 6: Distance measures and clustering  
 **Distance measurements**  
 Similarity and dissimilarity of objects can be measured with distance measures. There are many different measures for different types of data. Here we perform *Euclidean distance* and *Manhattan distance* for the data.
 ```{r}
@@ -110,6 +112,7 @@ Three clusters is tried first.
 km=kmeans(boston_scaled,centers = 3)
 pairs(boston_scaled,col=km$cluster)
 ```
+  
 **Find the optimal number of cluster**  
 One way to determine the number of clusters is to look at how the total of within cluster sum of squares (WCSS) behaves when the number of cluster changes. When you plot the number of clusters and the total WCSS, the optimal number of clusters is when the total WCSS drops radically.  
 ```{r}
@@ -118,11 +121,13 @@ k_max=10
 twcss=sapply(1:k_max,function(k){kmeans(boston_scaled,k)$tot.withinss})
 qplot(x=1:k_max,y=twcss,geom='line')
 ```
+  
 According to the line figure shown above, the most radically drop of the line happens when the K value is 2. So the optimal number of clusters is 2.   
 ```{r}
 km=kmeans(boston_scaled,centers=2)
 pairs(boston_scaled,col=km$cluster)
 ```
+  
 From the figure we can see that, for most of the variables, the k-means method could classify the results quite well.  
 The method of calculating K-means:  
 1. Choose the number of clusters and initial centroids.  
