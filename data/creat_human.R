@@ -4,6 +4,8 @@
 #The data originates from the United Nations Development Programme. 
 #
 
+library(dplyr)
+library(stringr)
 # Read the human development data
 #human=read.table('
 hd <- read.csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human_development.csv", stringsAsFactors = F)
@@ -30,3 +32,24 @@ gii=mutate(gii,Edu2.FM=Edu2.F/Edu2.M,Labo.FM=Labo.F/Labo.M)
 human=inner_join(hd,gii,by='Country')
 dim(human)
 summary(human)
+
+# Mutate the GNI data in 'human' dataset
+str(human$GNI)
+human$GNI=str_replace(human$GNI,pattern=',',replace='') %>% as.numeric
+
+# Dealing with not available (NA) values
+keep=c("Country", "Edu2.FM", "Labo.FM", "Life.Exp", "Edu.Exp", "GNI", "Mat.Mor", "Ado.Birth", "Parli.F")
+human=select(human,one_of(keep))
+human=filter(human,complete.cases(human))
+
+# Remove observations with related to regions instead of countries
+last=nrow(human)-7
+human_=human[1:last,]
+
+# Define the row names of the data by the country names
+rownames(human_)=human_$Country
+human=human_[-1]
+
+# Save data
+setwd('/home/xiaodong/IODS_course/IODS-project/data')
+write.table(human,file='human.txt',row.names=T,sep = '\t')

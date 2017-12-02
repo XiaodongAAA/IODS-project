@@ -1,0 +1,151 @@
+# Chapter 5 Dimensionality reduction technique
+Created on 01.12.2017  
+@author: Xiaodong Li    
+This is the script for RStudio exercise 5 -- Dimensionality reduction technique  
+
+## Step 0: Import packages
+```{r}
+library(GGally)
+library(corrplot)
+```
+
+## Step 1: Read and explore data
+```{r}
+human = read.table('/home/xiaodong/IODS_course/IODS-project/data/human.txt',sep='\t',header = TRUE)
+str(human)
+dim(human)
+```
+The `human` data describes the Human Development Index (HDI) and Gross National Income (GNI) situation in different countries together with the education, labour and health experiences. The goal is to show that the people and the their capabilities should be the ultimate criteria for assessing the development of a country, not economic growth alone. 
+The meaning of different variables are shown below:  
+
+* `Edu2.FM`: The ratio of Female and Male populations with secondary education  
+
+* `Labo.FM`: The ratio of labour force participation of females and males  
+
+* `life.Exp`: Life expectancy at birth  
+
+* `Edu.Exp`: Expected years of education  
+
+* `GNI`: Gross national income per capita  
+
+* `Mat.Mor`: Maternal mortality ratio  
+
+* `Ado.Birth`: Adolescent birth rate  
+
+* `Parli.F`: Percent Representation in Parliament n  
+
+## Step 2: Graphical overview of the data
+Visuualize the `human` data with ggpairs()
+```{r}
+ggpairs(human)
+```  
+  
+Visualize the `human` data with correlation plots
+```{r}
+cor_matrix=cor(human)
+corrplot(cor_matrix,type='upper')
+```  
+  
+The scatter plots and correlation plots between all the variables shown above give information about the relationships and distributions of all the data. From the plots we can see that `Life.Exp` has strong positive relation with `Edu.Exp` and also very strong negative relation with `Mat.Mor` and `Ado.Birth`. `Edu2.Fm` has strong negative relation with `Mat.Mor` too.  
+
+## Step 3: Perform PCA on not standardized data  
+Perform Principal Component Analysis (PCA) with the SVD method
+```{r}
+pca_human=prcomp(human)
+s=summary(pca_human)
+s
+pca_pr=round(100*s$importance[2,],digits=1)
+pc_lab=paste0(names(pca_pr),'(',pca_pr,'%)')
+biplot(pca_human,choices=1:2,cex=c(0.8,1),xlab=pc_lab[1],ylab=pc_lab[2])
+```  
+  
+The biplot figure with not standardized variable is not clear because the varialbes have different scales and are not compariable.  
+
+## Step 4: Perform PCA on standardized data   
+```{r}
+human_std=scale(human)
+pca_human=prcomp(human_std)
+s=summary(pca_human)
+s
+pca_pr=round(100*s$importance[2,],digits=1)
+pc_lab=paste0(names(pca_pr),'(',pca_pr,'%)')
+biplot(pca_human,choices = 1:2,cex=c(0.8,1),xlab=pc_lab[1],ylab=pc_lab[2])
+```  
+  
+The biplots got from `Step 3` and `Step 4` give different PCA results. For the data that was not standardized, the `GNI` variable has very big variance and all the data could be transformed to the first principal component (PC1). However, for the data that was standardized, all the variables have similar vairance and the features of the original data are comprised in several pricipal components. The different distributions of the data in these two different situations are shown clearly in the two biplots.  
+The biplot is a way of visualizing two representations of the same data. The biplot displays,  
+
+1. The observations in a lower 2-dimensional representation.  
+  A scatter plot is drawn where the observations are placed on X and Y coordinates defined by two pricipal components.  
+  
+2. The original features and their relationships with both each other and the pricipal components.  
+  Arrows and/or labels are drawn to visualize the connections between the original features and pricipal components.  
+* The angle between arrows representing the original features can be interpreted as the corelation between the features. Small angle = high positive correlation.  
+
+* The angle between a feature and a principal component axis can be interpreted as the correlation between the two. Small angle = high positive correlation.  
+
+* The length of the arrows are proportional to the standard deviation of the features.  
+According to the description of the features of biplot we can summarize the relationship between the observations.  
+* `Mat.Mor` and `Ado.Birth` have high positive relationship between each other. 
+
+* `Edu.Exp`,`Edu2.FM`,`GNI` and `Life.Exp` have high positive relationship between other.   
+
+* The above two groups have high negative relationship between each other.  
+
+* The standard deviation of the observations are quite similar because of the scaling process.  
+
+## Step 5: Perform MCA on tea dataset  
+Load the tea dataset
+```{r}
+library(FactoMineR)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+data('tea')
+str(tea)
+dim(tea)
+```
+The tea dataset contains the answers of a questionnaire on tea consumption for 300 individuals. Although the data contains 36 columns for demonstration purposes I will only consider 6 of the following columns:
+```{r}
+keep_columns=c('Tea','How','how','sugar','where','lunch')
+tea_time=dplyr::select(tea,one_of(keep_columns))
+summary(tea_time)
+str(tea_time)
+gather(tea_time) %>% ggplot(aes(value))+geom_bar()+facet_wrap('key',scales='free')+theme(axis.text=element_text(angle=45,hjust = 1,size=8))
+```  
+  
+Perform MCA on the selected tea dateset--`tea_time` 
+```{r}
+mca=MCA(tea_time,graph=FALSE)
+summary(mca)
+plot(mca,invisible=c('ind'),habillage='quali')
+```  
+  
+Multiple Correspondence Analysis (MCA) is an extension of simple CA to analyse a data table containing more than two categorical variables. MCA is generally used to analyse a data from survey.  
+The objectives are to identify:  
+
+* A group of individuals with similar profile in their answers to the questions  
+
+* The associations between variable categories  
+
+The result of the function summary() contains 4 tables:  
+
+* Table 1 - Eigenvalues: table 1 contains the variances and the percentage of variances retained by each dimension.  
+
+* Table 2 contains the coordinates, the contribution and the cos2 (quality of representation [in 0-1]) of the first 10 active individuals on the dimensions 1 and 2.  
+* Table 3 contains the coordinates, the contribution and the cos2 (quality of representation [in 0-1]) of the first 10 active variable categories on the dimensions 1 and 2. This table contains also a column called v.test. The value of the v.test is generally comprised between 2 and -2. For a given variable category, if the absolute value of the v.test is superior to 2, this means that the coordinate is significantly different from 0.  
+
+* Table 4 - categorical variables (eta2): contains the squared correlation between each variable and the dimensions.  
+
+The MCA graph shows a global pattern within the data. Rows (individuals) are usually represented by blue points and columns (variable categories) by red triangles.  
+The distance between any row points or column points gives a measure of their similarity (or dissimilarity).  
+Row points with similar profile are closed on the factor map. The same holds true for column points.  
+In the situation of our results shown above, we can conclude that, variable `tea shop` and `unpackaged` are the most correlated with dimension 1. Similarly, the variables `other` and `chain store+tea shop` are the most correlated with dimension 2.  
+
+
+
+
+
+
+
+
